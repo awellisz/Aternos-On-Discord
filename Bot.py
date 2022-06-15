@@ -8,14 +8,16 @@ from dotenv import load_dotenv
 from discord.ext import tasks, commands
 
 from Configure import launch_config
-from connect_and_launch import get_status, get_number_of_players, \
-                               get_ip, get_tps
-from connect_and_launch import connect_account, adblockBypass, refreshBrowser
+from connect_and_launch import get_status, get_number_of_players, get_ip, get_tps
+from connect_and_launch import connect_account, refreshBrowser
 from connect_and_launch import start_server, stop_server
-from connect_and_launch import adblock
 from embeds import server_info_embed, help_embed
 
 from selenium.common.exceptions import ElementNotInteractableException
+
+# Bypass cloudstrike
+import cloudscraper
+scraper = cloudscraper.create_scraper(browser='chrome')
 
 # setup environment vars if .env doesn't exist
 if not os.path.exists(os.path.relpath(".env")):
@@ -51,13 +53,10 @@ async def on_ready():
     connect_account()  # logs into aternos
     logging.info(f'The bot is logged in as: {bot.user}')
     await asyncio.sleep(2)
-    serverStatus.start()  # starts the presence update loop
+    # serverStatus.start()  # starts the presence update loop
 
-    # starts adblock loop if network adblock is on
-    if adblock:
-        adblockWall.start()
-
-    resetBrowser.start()  # starts browser refresh loop
+    # resetBrowser.start()  # starts browser refresh loop
+    print("Test")
 
 
 @bot.command()
@@ -148,35 +147,25 @@ async def help(ctx):
     await ctx.send(embed=help_embed())
 
 
-@tasks.loop(seconds=5.0)
-async def serverStatus():
-    server_status = get_status()
-    if server_status == "Online":
-        text = f"Server: {get_status()} | " \
-               f"Players: {get_number_of_players()} | " \
-               f"TPS: {get_tps()} | " \
-               f"--help"
-    else:
-        text = f"Server: {get_status()} | " \
-               f"{get_ip()} | " \
-               f"--help"
-    activity = discord.Activity(type=discord.ActivityType.watching, name=text)
-    await bot.change_presence(activity=activity)
-
-
-@tasks.loop(seconds=5.0)
-async def adblockWall():
-    try:
-        adblockBypass()
-    except ElementNotInteractableException:
-        pass
+# @tasks.loop(seconds=5.0)
+# async def serverStatus():
+#     server_status = get_status()
+#     if server_status == "Online":
+#         text = f"Server: {get_status()} | " \
+#                f"Players: {get_number_of_players()} | " \
+#                f"TPS: {get_tps()} | " \
+#                f"--help"
+#     else:
+#         text = f"Server: {get_status()} | " \
+#                f"{get_ip()} | " \
+#                f"--help"
+#     activity = discord.Activity(type=discord.ActivityType.watching, name=text)
+#     await bot.change_presence(activity=activity)
 
 
 @tasks.loop(hours=1.0)
 async def resetBrowser():
     refreshBrowser()
-    if adblock:
-        adblockBypass()
     logging.info('Refreshed browser')
 
 

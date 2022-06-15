@@ -4,10 +4,17 @@ import os
 import logging
 
 from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+
 from selenium.common.exceptions import ElementNotInteractableException, \
                                        NoSuchElementException
 from dotenv import load_dotenv
 from chromedriver_py import binary_path
+
+# Bypass cloudstrike
+import cloudscraper
+scraper = cloudscraper.create_scraper(browser='chrome')
+
 
 load_dotenv()
 USER = os.getenv('USERNAME_C')
@@ -25,7 +32,8 @@ options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                      "AppleWebKit/537.36 (KHTML, like Gecko) "
                      "Chrome/87.0.4280.88 Safari/537.36")
 
-driver = webdriver.Chrome(options=options, executable_path=binary_path)
+driver = webdriver.Chrome(ChromeDriverManager().install())
+#driver = webdriver.Chrome(options=options, executable_path=binary_path)
 
 
 async def start_server():
@@ -114,11 +122,14 @@ def connect_account():
     # login to aternos
     element = driver.find_element_by_xpath('//*[@id="user"]')
     element.send_keys(USER)
+    print("Entered Username")
     element = driver.find_element_by_xpath('//*[@id="password"]')
     element.send_keys(PASSWORD)
+    print("Entered Password")
     element = driver.find_element_by_xpath('//*[@id="login"]')
     element.click()
-    time.sleep(2)
+    print("Clicked Login")
+    time.sleep(3)
 
     # selects server from server list
     element = driver.find_element_by_css_selector('body > div > main > section'
@@ -126,22 +137,7 @@ def connect_account():
                                                   '> div > div.server-body')
     element.click()
 
-    # by passes the 3 second adblock
-    if adblock:
-        adblockBypass()
-
     logging.info('Aternos Tab Loaded')
-
-
-def adblockBypass():
-    time.sleep(1)
-    element = driver.find_element_by_xpath('//*[@id="sXMbkZHTzeemhBrPtXgBD'
-                                           'DwAboVOOFxHiMjcTsUwoIOJ"]/div/'
-                                           'div/div[3]/div[2]/div[3]/div'
-                                           '[1]')
-    element.click()
-    time.sleep(3)
-    logging.debug("Adblock Wall Bypassed")
 
 
 async def stop_server():
